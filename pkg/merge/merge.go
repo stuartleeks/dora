@@ -10,45 +10,47 @@ func MergeJSON(baseDocument ast.RootNode, mergeDocument ast.RootNode) (*ast.Root
 
 	result := baseDocument
 
-	newContent, err := mergeValueContent(result.RootValue.Content, mergeDocument.RootValue.Content, "$")
+	newContent, err := mergeValueContent(*result.RootValue, *mergeDocument.RootValue, "$")
 	if err != nil {
 		return nil, err
 	}
-	result.RootValue.Content = newContent
+	result.RootValue = &newContent
 	return &result, nil
 }
 
-func mergeValueContent(baseValue ast.ValueContent, mergeValue ast.ValueContent, currentPath string) (ast.ValueContent, error) {
+func mergeValueContent(baseValue ast.Value, mergeValue ast.Value, currentPath string) (ast.Value, error) {
 
-	switch baseContent := (baseValue).(type) {
+	result := baseValue
+	switch resultContent := (baseValue.Content).(type) {
 	case ast.Object:
-		switch mergeContent := mergeValue.(type) {
+		switch mergeContent := mergeValue.Content.(type) {
 		case ast.Object:
 			for _, mergeChild := range mergeContent.Children {
-				baseChild := getChildByKey(baseContent, mergeChild.Key.Value)
+				baseChild := getChildByKey(resultContent, mergeChild.Key.Value)
 				if baseChild == nil {
-					lastChildIndex := len(baseContent.Children) - 1
-					if baseContent.Children[lastChildIndex].HasCommaSeparator {
-						baseContent.SuffixStructure = append(stripWhiteSpace(baseContent.SuffixStructure), mergeContent.SuffixStructure...)
+					lastChildIndex := len(resultContent.Children) - 1
+					if resultContent.Children[lastChildIndex].HasCommaSeparator {
+						resultContent.SuffixStructure = append(stripWhiteSpace(resultContent.SuffixStructure), mergeContent.SuffixStructure...)
 					} else {
 						// Add in comma
-						baseContent.Children[lastChildIndex].HasCommaSeparator = true
-						baseContent.Children[lastChildIndex].Value.SuffixStructure = stripWhiteSpace(baseContent.Children[lastChildIndex].Value.SuffixStructure)
+						resultContent.Children[lastChildIndex].HasCommaSeparator = true
+						resultContent.Children[lastChildIndex].Value.SuffixStructure = stripWhiteSpace(resultContent.Children[lastChildIndex].Value.SuffixStructure)
 						if mergeChild.HasCommaSeparator {
-							baseContent.SuffixStructure = append(stripWhiteSpace(baseContent.SuffixStructure), mergeContent.SuffixStructure...)
+							resultContent.SuffixStructure = append(stripWhiteSpace(resultContent.SuffixStructure), mergeContent.SuffixStructure...)
 						}
 					}
-					baseContent.Children = append(baseContent.Children, mergeChild)
+					resultContent.Children = append(resultContent.Children, mergeChild)
 				} else {
 					// TODO - handle merging object properties
 				}
 			}
-			return baseContent, nil
+			result.Content = resultContent
+			return result, nil
 		default:
-			return nil, fmt.Errorf("mis-matched types at %q. base type: %T, merge type: %T", currentPath, baseContent, mergeContent)
+			return ast.Value{}, fmt.Errorf("mis-matched types at %q. base type: %T, merge type: %T", currentPath, resultContent, mergeContent)
 		}
 	default:
-		return nil, fmt.Errorf("unhandled type at %q. base type: %T", currentPath, baseContent)
+		return ast.Value{}, fmt.Errorf("unhandled type at %q. base type: %T", currentPath, resultContent)
 	}
 }
 
