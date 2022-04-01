@@ -32,7 +32,11 @@ const TestJSON = `
     "date": "04/19/2020",
     "enabled": true,
 	"PI": 3.1415,
-	"disabled": false
+	"disabled": false,
+	"props": {
+		"name": "Alice",
+		"pet" : "dog"
+	}
 }`
 
 func TestScanQueryTokens(t *testing.T) {
@@ -152,6 +156,7 @@ func TestClient_GetString(t *testing.T) {
 		},
 	}
 
+	_ = tests
 	for _, tt := range tests {
 		c, err := NewFromString(TestJSON)
 		if err != nil {
@@ -234,6 +239,32 @@ func TestClient_GetFloat64(t *testing.T) {
 		}
 	}
 }
+
+// func TestClient_GetStringMap(t *testing.T) {
+// 	tests := [...]struct {
+// 		query          string
+// 		expectedResult map[string]string
+// 	}{
+// 		{
+// 			query: "$.props",
+// 			expectedResult: map[string]string{
+// 				"name": "Alice",
+// 				"pet":  "dog",
+// 			},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		c, err := NewFromString(TestJSON)
+// 		if err != nil {
+// 			t.Fatalf("\nError creating client: %v\n", err)
+// 		}
+
+// 		result, err := c.GetStringMap(tt.query)
+// 		if assert.Nil(t, err) {
+// 			assert.Equal(t, tt.expectedResult, result)
+// 		}
+// 	}
+// }
 
 // Most recent bench: (faster than std lib!!!!!!!!!!!!!)
 // goos: darwin

@@ -3,7 +3,6 @@ package dora
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/bradford-hamilton/dora/pkg/ast"
 	"github.com/bradford-hamilton/dora/pkg/danger"
@@ -137,7 +136,7 @@ func (c *Client) executeQuery() error {
 			case ast.Literal:
 				// If we're on the final value, return it
 				if i == parsedQueryLen-1 {
-					c.setResultFromLiteral(v.Value)
+					c.setResultFromValue(v)
 				} else {
 					return errors.New("Sorry, it looks like your query isn't quite right")
 				}
@@ -167,30 +166,14 @@ func (c *Client) setFinalValue(currentType ast.Type, index int, obj ast.Object, 
 
 // setResultFromValue switches on an ast.Value type and assigns the appropriate result to the client
 func (c *Client) setResultFromValue(value ast.Value) {
+	c.resultValue = value
 	switch val := value.(type) {
 	case ast.Literal:
-		c.setResultFromLiteral(val.Value)
+		c.result = val.String()
 	case ast.Object:
 		c.result = string(c.input[val.Start:val.End])
 	case ast.Array:
-		c.result = string(c.input[val.Start:val.End])
-	}
-}
-
-// setResultFromLiteral is very similar to setResultFromValue, except it we know the value we're switching over
-// must be a Literal, meaning the assigned result will either be a string, number, boolean, or null
-func (c *Client) setResultFromLiteral(value ast.Value) {
-	switch lit := value.(type) {
-	case string:
-		c.result = lit
-	case float64:
-		c.result = fmt.Sprintf("%f", lit)
-	case int:
-		c.result = strconv.Itoa(lit)
-	case bool:
-		c.result = fmt.Sprintf("%v", lit)
-	case nil:
-		c.result = "null"
+		c.result = val.String()
 	}
 }
 
