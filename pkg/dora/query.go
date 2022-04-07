@@ -25,6 +25,18 @@ var (
 	)
 )
 
+var _ error = &KeyNotFoundError{}
+
+// StatusError is used to return informational errors
+type KeyNotFoundError struct {
+	Key   string
+	Query string
+}
+
+func (e *KeyNotFoundError) Error() string {
+	return fmt.Sprintf("Sorry, could not find a key with that value. Key: %q (Query: %q)", e.Key, e.Query)
+}
+
 // prepAndExecQuery prepares and executes a passed in query
 func (c *Client) prepAndExecQuery(query string) error {
 	if err := c.prepareQuery(query, c.tree.Type); err != nil {
@@ -115,7 +127,7 @@ func (c *Client) executeQuery() error {
 				}
 			}
 			if !found {
-				return fmt.Errorf("Sorry, could not find a key with that value. Key: %s", c.parsedQuery[i].key)
+				return &KeyNotFoundError{Key: c.parsedQuery[i].key, Query: string(c.query)}
 			}
 		} else { // If the query token we're on is asking for an array
 			if currentType != ast.ArrayType {
