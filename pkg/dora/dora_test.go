@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const TestJSON = `
@@ -173,6 +175,38 @@ func TestClient_GetString(t *testing.T) {
 		}
 	}
 }
+func TestClient_GetOObject_String(t *testing.T) {
+	tests := [...]struct {
+		query          string
+		expectedResult string
+	}{
+		{
+			query:          "$.data.users[0].first_name",
+			expectedResult: "bradford",
+		},
+		{
+			query:          "$.superNest.inner1.inner2.inner3.inner4[0].inner5.inner6",
+			expectedResult: "neato",
+		},
+	}
+
+	_ = tests
+	for _, tt := range tests {
+		c, err := NewFromString(TestJSON)
+		if err != nil {
+			t.Fatalf("\nError creating client: %v\n", err)
+		}
+
+		result, err := c.GetObject(tt.query)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if result != tt.expectedResult {
+			t.Fatalf("Expected result type of %s, got: %s", tt.expectedResult, result)
+		}
+	}
+}
 
 func TestClient_GetBool(t *testing.T) {
 	tests := [...]struct {
@@ -195,6 +229,36 @@ func TestClient_GetBool(t *testing.T) {
 		}
 
 		result, err := c.GetBool(tt.query)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if result != tt.expectedResult {
+			t.Fatalf("Expected result type of %T, got: %T", tt.expectedResult, result)
+		}
+	}
+}
+func TestClient_GetObject_Bool(t *testing.T) {
+	tests := [...]struct {
+		query          string
+		expectedResult bool
+	}{
+		{
+			query:          "$.enabled",
+			expectedResult: true,
+		},
+		{
+			query:          "$.disabled",
+			expectedResult: false,
+		},
+	}
+	for _, tt := range tests {
+		c, err := NewFromString(TestJSON)
+		if err != nil {
+			t.Fatalf("\nError creating client: %v\n", err)
+		}
+
+		result, err := c.GetObject(tt.query)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -239,32 +303,74 @@ func TestClient_GetFloat64(t *testing.T) {
 		}
 	}
 }
+func TestClient_GetObject_Float64(t *testing.T) {
+	tests := [...]struct {
+		query          string
+		expectedResult float64
+	}{
+		{
+			query:          "$.PI",
+			expectedResult: 3.1415,
+		},
+		{
+			query:          "$.codes[1]",
+			expectedResult: 201.000000,
+		},
+		{
+			query:          "$.codes[4]",
+			expectedResult: 404.567,
+		},
+	}
+	for _, tt := range tests {
+		c, err := NewFromString(TestJSON)
+		if err != nil {
+			t.Fatalf("\nError creating client: %v\n", err)
+		}
 
-// func TestClient_GetStringMap(t *testing.T) {
-// 	tests := [...]struct {
-// 		query          string
-// 		expectedResult map[string]string
-// 	}{
-// 		{
-// 			query: "$.props",
-// 			expectedResult: map[string]string{
-// 				"name": "Alice",
-// 				"pet":  "dog",
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		c, err := NewFromString(TestJSON)
-// 		if err != nil {
-// 			t.Fatalf("\nError creating client: %v\n", err)
-// 		}
+		result, err := c.GetObject(tt.query)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-// 		result, err := c.GetStringMap(tt.query)
-// 		if assert.Nil(t, err) {
-// 			assert.Equal(t, tt.expectedResult, result)
-// 		}
-// 	}
-// }
+		if result != tt.expectedResult {
+			t.Fatalf("Expected result type of %f, got: %f", tt.expectedResult, result)
+		}
+	}
+}
+
+func TestClient_GetObject(t *testing.T) {
+	tests := [...]struct {
+		query          string
+		expectedResult interface{}
+	}{
+		{
+			query: "$.props",
+			expectedResult: map[string]interface{}{
+				"name": "Alice",
+				"pet":  "dog",
+			},
+		},
+		{
+			query:          "$.codes",
+			expectedResult: []interface{}{200.0, 201.0, 400.0, 403.0, 404.567},
+		},
+		{
+			query:          "$.data.users[0].random_items",
+			expectedResult: []interface{}{true, map[string]interface{}{"dog_name": "ellie"}},
+		},
+	}
+	for _, tt := range tests {
+		c, err := NewFromString(TestJSON)
+		if err != nil {
+			t.Fatalf("\nError creating client: %v\n", err)
+		}
+
+		result, err := c.GetObject(tt.query)
+		if assert.Nil(t, err) {
+			assert.Equal(t, tt.expectedResult, result)
+		}
+	}
+}
 
 // Most recent bench: (faster than std lib!!!!!!!!!!!!!)
 // goos: darwin

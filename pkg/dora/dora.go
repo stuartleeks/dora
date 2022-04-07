@@ -74,26 +74,10 @@ func (c *Client) GetFloat64(query string) (float64, error) {
 	return f, nil
 }
 
-// // GetStringMap wraps a call to `get` and returns the result as a map[string]string
-// func (c *Client) GetStringMap(query string) (map[string]string, error) {
-// 	if err := c.prepAndExecQuery(query); err != nil {
-// 		return nil, err
-// 	}
-
-// 	resultRaw := c.resultValue
-
-// 	var resultObject ast.Object
-
-// 	switch t := resultRaw.(type) {
-// 	case ast.Object:
-// 		resultObject = t
-// 	default:
-// 		return nil, fmt.Errorf("The query specified (%q) must return an object for GetStringMap", query)
-// 	}
-
-// 	for	_, property := range resultObject.Children {
-// 		property.Value
-// 	}
-
-// 	return map[string]string{"todo": "hey"}, nil
-// }
+// GetObject wraps a call to `get` and returns the result as an interface{}
+func (c *Client) GetObject(query string) (interface{}, error) {
+	if err := c.prepAndExecQuery(query); err != nil {
+		return nil, err
+	}
+	return c.resultValue.GoType(), nil
+}

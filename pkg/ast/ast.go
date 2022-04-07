@@ -38,8 +38,8 @@ type Type int
 // Value will eventually have some methods that all Values must implement. For now
 // it represents any JSON value (object | array | boolean | string | number | null)
 type Value interface {
-	// AsGoType() interface{}
 	String() string
+	GoType() interface{}
 }
 
 // Object represents a JSON object. It holds a slice of Property as its children,
@@ -62,6 +62,13 @@ func NewObject(sourceBuf *[]byte) Object {
 func (o Object) String() string {
 	return string((*o.sourceBuf)[o.Start:o.End])
 }
+func (o Object) GoType() interface{} {
+	result := map[string]interface{}{}
+	for _, property := range o.Children {
+		result[property.Key.String()] = property.Value.GoType()
+	}
+	return result
+}
 
 var _ Value = Object{}
 
@@ -83,6 +90,13 @@ func NewArray(sourceBuf *[]byte) Array {
 }
 func (a Array) String() string {
 	return string((*a.sourceBuf)[a.Start:a.End])
+}
+func (a Array) GoType() interface{} {
+	result := make([]interface{}, len(a.Children))
+	for i, child := range a.Children {
+		result[i] = child.GoType()
+	}
+	return result
 }
 
 var _ Value = Array{}
@@ -109,6 +123,9 @@ func (l Literal) String() string {
 		return fmt.Sprintf("%v", lit)
 	}
 }
+func (l Literal) GoType() interface{} {
+	return l.Value
+}
 
 var _ Value = Literal{}
 
@@ -123,6 +140,9 @@ type Property struct {
 func (p Property) String() string {
 	return fmt.Sprintf("%s=%s", p.Key.String(), p.Value.String())
 }
+func (p Property) GoType() interface{} {
+	return nil // TODO - revisit this
+}
 
 var _ Value = Property{}
 
@@ -134,6 +154,9 @@ type Identifier struct {
 
 func (i Identifier) String() string {
 	return i.Value
+}
+func (i Identifier) GoType() interface{} {
+	return nil // TODO - revisit this
 }
 
 var _ Value = Identifier{}
