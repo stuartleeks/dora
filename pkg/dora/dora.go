@@ -18,6 +18,7 @@ type Client struct {
 	query       []byte
 	parsedQuery []queryToken
 	result      string
+	resultValue ast.Value
 }
 
 // NewFromString takes a string, creates a lexer, creates a parser from the lexer,
@@ -71,4 +72,12 @@ func (c *Client) GetFloat64(query string) (float64, error) {
 		return 0.0, err
 	}
 	return f, nil
+}
+
+// GetObject wraps a call to `get` and returns the result as an interface{}
+func (c *Client) GetObject(query string) (interface{}, error) {
+	if err := c.prepAndExecQuery(query); err != nil {
+		return nil, err
+	}
+	return c.resultValue.GoType(), nil
 }

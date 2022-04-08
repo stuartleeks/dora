@@ -5,6 +5,21 @@ import (
 	"unsafe"
 )
 
+// // These method were implemented as a low-allocation, high-performance way to convert bytes<->string
+// // When running on go 1.178.8, the following error is reported
+// //      fatal error: checkptr: converted pointer straddles multiple allocations
+// // For now, falling back to the classic conversion approach, but would be good to revisit
+
+// func BytesToString(bytes []byte) (s string) {
+// 	return string(bytes)
+// }
+
+// func StringToBytes(s string) (b []byte) {
+// 	return []byte(s)
+// }
+
+// Original implemnentations below:
+
 // BytesToString turns a []byte into a string with 0 MemAllocs and 0 MemBytes.
 // This is an unsafe operation and may lead to problems if the bytes passed in
 // are changed while the string is used. No checking whether bytes are valid

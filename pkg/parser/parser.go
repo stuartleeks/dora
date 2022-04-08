@@ -80,7 +80,7 @@ func (p *Parser) parseValue() ast.Value {
 
 // parseJSONObject is called when an open left brace `{` token is found
 func (p *Parser) parseJSONObject() ast.Value {
-	obj := ast.Object{Type: ast.ObjectType}
+	obj := ast.NewObject(&p.lexer.Input)
 	objState := ast.ObjStart
 
 	for !p.currentTokenTypeIs(token.EOF) {
@@ -137,7 +137,7 @@ func (p *Parser) parseJSONObject() ast.Value {
 
 // parseJSONArray is called when an open left bracket `[` token is found
 func (p *Parser) parseJSONArray() ast.Value {
-	array := ast.Array{Type: ast.ArrayType}
+	array := ast.NewArray(&p.lexer.Input)
 	arrayState := ast.ArrayStart
 
 	for !p.currentTokenTypeIs(token.EOF) {
