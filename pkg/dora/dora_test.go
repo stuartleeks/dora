@@ -385,6 +385,19 @@ func TestClient_GetObject(t *testing.T) {
 	}
 }
 
+func TestClient_GetObject_NonExistentKey(t *testing.T) {
+	c, err := NewFromString(TestJSON)
+	if err != nil {
+		t.Fatalf("\nError creating client: %v\n", err)
+	}
+
+	_, err = c.GetObject("$.non_existent_path")
+
+	if assert.Error(t, err) {
+		assert.Equal(t, &KeyNotFoundError{Key: "non_existent_path", Query: "$.non_existent_path"}, err)
+	}
+}
+
 // Most recent bench: (faster than std lib!!!!!!!!!!!!!)
 // goos: darwin
 // goarch: amd64
