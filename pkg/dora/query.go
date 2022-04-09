@@ -25,6 +25,18 @@ var (
 	)
 )
 
+var _ error = &KeyNotFoundError{}
+
+// StatusError is used to return informational errors
+type KeyNotFoundError struct {
+	Key   string
+	Query string
+}
+
+func (e *KeyNotFoundError) Error() string {
+	return fmt.Sprintf("Sorry, could not find a key with that value. Key: %q (Query: %q)", e.Key, e.Query)
+}
+
 // prepAndExecQuery prepares and executes a passed in query
 func (c *Client) prepAndExecQuery(query string) error {
 	if err := c.prepareQuery(query, c.tree.Type); err != nil {
@@ -99,7 +111,7 @@ func (c *Client) executeQuery() error {
 
 					// If i == parsedQueryLen-1, we are on the final iteration
 					if i == parsedQueryLen-1 {
-						c.setResultFromValue(val)
+						c.setResultFromValue(val.Content)
 						return nil
 					}
 
@@ -118,7 +130,7 @@ func (c *Client) executeQuery() error {
 				}
 			}
 			if !found {
-				return fmt.Errorf("sorry, could not find a key with that value. Key: %s", c.parsedQuery[i].key)
+				return &KeyNotFoundError{Key: c.parsedQuery[i].key, Query: string(c.query)}
 			}
 		} else { // If the query token we're on is asking for an array
 			if currentType != ast.ArrayType {
@@ -143,7 +155,7 @@ func (c *Client) executeQuery() error {
 			case ast.Literal:
 				// If we're on the final value, return it
 				if i == parsedQueryLen-1 {
-					c.setResultFromLiteral(v.Value)
+					c.setResultFromValue(v)
 				} else {
 					return errors.New("sorry, it looks like your query isn't quite right")
 				}
@@ -164,31 +176,8 @@ func (c *Client) setResultFromValue(value ast.ValueContent) {
 		// unwrap the Value
 		value = v2.Content
 	}
-	switch val := value.(type) {
-	case ast.Literal:
-		c.setResultFromLiteral(val.Value)
-	case ast.Object:
-		c.result = string(c.input[val.Start:val.End])
-	case ast.Array:
-		c.result = string(c.input[val.Start:val.End])
-	}
-}
-
-// setResultFromLiteral is very similar to setResultFromValue, except it we know the value we're switching over
-// must be a Literal, meaning the assigned result will either be a string, number, boolean, or null
-func (c *Client) setResultFromLiteral(value ast.ValueContent) {
-	switch lit := value.(type) {
-	case string:
-		c.result = lit
-	case float64:
-		c.result = fmt.Sprintf("%f", lit)
-	case int, int64:
-		c.result = fmt.Sprintf("%d", lit)
-	case bool:
-		c.result = fmt.Sprintf("%v", lit)
-	case nil:
-		c.result = "null"
-	}
+	c.resultValue = value
+	c.result = value.String()
 }
 
 // validateQueryRoot handles some very simple validation around the root of the query
