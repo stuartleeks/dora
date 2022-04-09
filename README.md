@@ -74,12 +74,13 @@ fmt.Println(float)   // 3.14159
 
 3. Access arrays by index with bracket notation `[]`.
 
-4. **New**: Fetch by type to allow caller to ask for the proper Go type. For the time being, asking for objects or arrays in their entirety must be done through `GetString` which will return the chunk of JSON.
-    
+4. **New**: Fetch by type to allow caller to ask for the proper Go type. `GetString` supports asking for objects or arrays in their entirety, and  will return the chunk of JSON. `GetObject` returns Go types. The return type for `GetObject` is `interface{}`. Simple values such as strings and booleans are returned as the corresponding Go type, Arrays are returned as `[]interface{}`, and objects are treated as `map[string]interface{}`.
+
     Current API:
     - `GetString`
     - `GetFloat64`
     - `GetBool`
+    - `GetObject`
 
 5. Next feature will be approaching this either with some sort of serialization option maybe similar to stdlib or a simpler one with no options that returns a map or something? Will think about that some.
 
