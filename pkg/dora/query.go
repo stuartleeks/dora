@@ -99,7 +99,7 @@ func (c *Client) executeQuery() error {
 
 					// If i == parsedQueryLen-1, we are on the final iteration
 					if i == parsedQueryLen-1 {
-						c.setResultFromValue(val)
+						c.setResultFromValue(val.Content)
 						return nil
 					}
 
@@ -143,7 +143,7 @@ func (c *Client) executeQuery() error {
 			case ast.Literal:
 				// If we're on the final value, return it
 				if i == parsedQueryLen-1 {
-					c.setResultFromLiteral(v.Value)
+					c.setResultFromValue(v)
 				} else {
 					return errors.New("sorry, it looks like your query isn't quite right")
 				}
@@ -164,31 +164,7 @@ func (c *Client) setResultFromValue(value ast.ValueContent) {
 		// unwrap the Value
 		value = v2.Content
 	}
-	switch val := value.(type) {
-	case ast.Literal:
-		c.setResultFromLiteral(val.Value)
-	case ast.Object:
-		c.result = string(c.input[val.Start:val.End])
-	case ast.Array:
-		c.result = string(c.input[val.Start:val.End])
-	}
-}
-
-// setResultFromLiteral is very similar to setResultFromValue, except it we know the value we're switching over
-// must be a Literal, meaning the assigned result will either be a string, number, boolean, or null
-func (c *Client) setResultFromLiteral(value ast.ValueContent) {
-	switch lit := value.(type) {
-	case string:
-		c.result = lit
-	case float64:
-		c.result = fmt.Sprintf("%f", lit)
-	case int, int64:
-		c.result = fmt.Sprintf("%d", lit)
-	case bool:
-		c.result = fmt.Sprintf("%v", lit)
-	case nil:
-		c.result = "null"
-	}
+	c.result = value.String()
 }
 
 // validateQueryRoot handles some very simple validation around the root of the query
