@@ -83,6 +83,13 @@ func NewObject(sourceBuf *[]byte) Object {
 func (o Object) String() string {
 	return string((*o.sourceBuf)[o.Start:o.End])
 }
+func (o Object) GoType() interface{} {
+	result := map[string]interface{}{}
+	for _, property := range o.Children {
+		result[property.Key.Value] = property.Value.Content.GoType()
+	}
+	return result
+}
 
 // Array represents a JSON array It holds a slice of Value as its children,
 // a Type ("Array"), and start & end code points for displaying.
@@ -109,6 +116,14 @@ func (a Array) String() string {
 	return string((*a.sourceBuf)[a.Start:a.End])
 }
 
+func (a Array) GoType() interface{} {
+	result := make([]interface{}, len(a.Children))
+	for i, child := range a.Children {
+		result[i] = child.GoType()
+	}
+	return result
+}
+
 // Array holds a Type ("ArrayItem") as well as a `Value` and whether there is a comma after the item
 type ArrayItem struct {
 	Type               Type
@@ -122,6 +137,9 @@ var _ ValueContent = ArrayItem{}
 
 func (ai ArrayItem) String() string {
 	return ai.Value.String()
+}
+func (ai ArrayItem) GoType() interface{} {
+	return ai.Value.GoType()
 }
 
 // Literal represents a JSON literal value. It holds a Type ("Literal") and the actual value.
@@ -150,6 +168,10 @@ func (l Literal) String() string {
 	default:
 		return fmt.Sprintf("%v", lit)
 	}
+}
+
+func (l Literal) GoType() interface{} {
+	return l.Value
 }
 
 // Property holds a Type ("Property") as well as a `Key` and `Value`. The Key is an Identifier
@@ -181,11 +203,15 @@ var _ ValueContent = Value{}
 func (v Value) String() string {
 	return v.Content.String()
 }
+func (v Value) GoType() interface{} {
+	return v.Content.GoType()
+}
 
 // ValueContent will eventually have some methods that all Values must implement. For now
 // it represents any JSON value (object | array | boolean | string | number | null)
 type ValueContent interface {
 	String() string
+	GoType() interface{}
 }
 
 // state is a type alias for int and used to create the available value states below

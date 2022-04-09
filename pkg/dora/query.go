@@ -164,6 +164,7 @@ func (c *Client) setResultFromValue(value ast.ValueContent) {
 		// unwrap the Value
 		value = v2.Content
 	}
+	c.resultValue = value
 	c.result = value.String()
 }
 
